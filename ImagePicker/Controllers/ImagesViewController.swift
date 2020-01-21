@@ -6,6 +6,22 @@
 //  Copyright © 2020 Alex Paul. All rights reserved.
 //
 
+/*
+ * Used UIAlertController to present and action sheet
+ * Access the user's photo library
+ * Access the user's camera
+ * Add the NSCAmeraUsageDescription key to the info.plist
+ * Resize a UIImage using UIGraphicsImageRenderer
+ * Implemented UILongPressGestureRecognizer() to present an action sheet for deletion
+ * Maintained the aspect ratio of the image using AVMakeRect (AVFoundation framework)
+ * Create a custom delegate to notify the ImagesViewController about long press from the ImageCell
+ * Persisted image objects to the documents directory (create, read, delete)
+ 
+ Other features can add
+ * Share an image along with text to a user via SMS, Facebook, ...
+ * Automatically save original image taken to the photo library UIImageWriteToPhotosAlbum
+ */
+
 import UIKit
 import AVFoundation // we want to use AVMakeRect() to maintain image aspect ratio
 
@@ -177,7 +193,39 @@ extension ImagesViewController: UIImagePickerControllerDelegate, UINavigationCon
 // StepVI: creating custom delegation - conform to delegate
 extension ImagesViewController: ImageCellDelegate {
     func didLongPress(_ imageCell: ImageCell) {
-        print("cell was selected")
+        //print("cell was selected")
+        guard let indexPath = collectionView.indexPath(for: imageCell) else {
+            return
+        }
+        
+        //present an action sheet
+        
+        // action: delete, cancel
+        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        let deleteAction = UIAlertAction(title: "Delete", style: .destructive) { [weak self] alertAction in
+            self?.deleteImageObject(indexPath: indexPath)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        alertController.addAction(deleteAction)
+        alertController.addAction(cancelAction)
+        present(alertController, animated: true)
+        //print(indexPath.row)
+    }
+    
+    private func deleteImageObject(indexPath: IndexPath) {
+      
+        do {
+            // delete image object from documents directory
+            try dataPersistance.delete(event: indexPath.row)
+        
+        //delete imageObject from imageObjects
+            imageObjects.remove(at: indexPath.row)
+        //delete cell from collection view
+            collectionView.deleteItems(at: [indexPath])
+        } catch {
+            print("error deleting item: \(error)")
+        }
     }
 }
 
